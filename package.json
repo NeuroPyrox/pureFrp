@@ -1,0 +1,10 @@
+{
+  "name": "pureFrp",
+  "version": "1.0.0",
+  "description": "A purely functional reactive programming library like Haskell's Reactive-Banana or Reflex",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}
