@@ -24,5 +24,103 @@
     // mergeBind : Event (Event a) -> (Event a -> Event b) -> Moment (Event b)
     // loopEvent : Moment (Event a)
     // loopBehavior : Moment (Behavior a)
+
+    // Documentation plan: series of HTML "views" that demonstrate each combinator.
+    // Style: match generator-based html.js usage from frpExample/index.html.
+    // Each view below is described and given a placeholder generator function name.
+    // Implementations should be small generator functions that yield html controls
+    // and wire example reactives together so users can interact and observe results.
+    //
+    // Overview of planned views:
+    // 1) Basics: input, never, mapE, filter
+    //    - UI: a text input and two buttons (emit, clear). Live list of emitted values.
+    //    - Show mapE (transform input), filter (drop empty or short strings), never used
+    //      to demonstrate absence. Expected outcome: how events map & filter.
+    //    - Placeholder: function* view_basics() { /* use input, mapE, filter */ }
+    //
+    // 2) Merging & conflict resolution: merge
+    //    - UI: two independent counters (buttons) producing Event<number>.
+    //    - Merge the two counters into one Event with custom resolver to tag source.
+    //    - Show timeline / recent events. Placeholder: function* view_merge() {}
+    //
+    // 3) Behaviors and applying: mapB, apply, stepper
+    //    - UI: a slider (Behavior<number>) and a text field showing mapped value.
+    //    - Demonstrate stepper to convert an Event into a Behavior, then mapB/apply
+    //      to combine behaviors (e.g., multiply slider * stepper value).
+    //    - Placeholder: function* view_behaviors() {}
+    //
+    // 4) Tagging and mapTag: tag, mapTag
+    //    - UI: event of clicks + a live behavior (e.g., current timestamp or counter).
+    //    - Use tag to capture the behavior value at event time; mapTag to combine.
+    //    - Placeholder: function* view_tagging() {}
+    //
+    // 5) Higher-order events: switchE, mergeBind, observeE
+    //    - UI: controls to spawn child event streams (e.g., per-session events).
+    //    - Demonstrate switchE to follow most recent child Event, mergeBind to flatten
+    //      with custom mapping, and observeE for executing Moment-producing events.
+    //    - Placeholder: function* view_higher_order() {}
+    //
+    // 6) Looping and state: loopEvent, loopBehavior, mergeBind usage for state machines
+    //    - UI: a small state machine (traffic-light or counter with reset) implemented
+    //      using loopBehavior/loopEvent and stepper to keep internal state.
+    //    - Show how to expose events for external control and observe state changes.
+    //    - Placeholder: function* view_loops() {}
+    //
+    // 7) IO and outputs: output, observeE, and integration with DOM
+    //    - UI: demonstrate output to console or a log area when events fire.
+    //    - Show observeE converting Event(Moment a) to Event a and then output.
+    //    - Placeholder: function* view_io() {}
+    //
+    // 8) Composite examples: combining combinators in a small app
+    //    - Recreate a simplified version of the frpExample user-table: inputs,
+    //      signups, table behavior, merges and tagging. This is a "capstone" view
+    //      that links many combinators together. Placeholder: function* view_app() {}
+    //
+    // Implementation notes and conventions (for contributor reference):
+    // - Each view is a generator function* that yields html controls (see html.js API).
+    // - Views should expose a simple start function: startView(container, viewGenerator)
+    //   that mounts the view into a DOM element similarly to html.startHtml.
+    // - For each combinator demonstration include:
+    //     * Short prose comment describing the goal and the reactive wiring.
+    //     * Minimal wiring code showing the combinators in use (mapE, merge, stepper,
+    //       switchE, mapTag, tag, loopEvent, loopBehavior, observeE, output).
+    // - Add a top-level index page that lists all views with buttons to open them
+    //   (each button should switch the main container innerHtml to the chosen view).
+    //
+    // Suggested file organization (optional):
+    // - Keep examples in this index.html for simplicity, following frpExample style.
+    // - Alternatively move detailed examples into examples/*.html or examples/*.js
+    //   if the file grows large.
+    //
+    // Next steps for implementation:
+    // - Implement view skeletons in this file matching the placeholder names above.
+    // - Wire a navigation list that switches between views using loopEvent/switchE.
+    // - Implement 1-2 full views (Basics and Behaviors) first as runnable examples.
+    //
+    // Placeholder function declarations to match frpExample style.
+    function* view_basics() {
+      // TODO: use input, mapE, filter to show basic event flow
+    }
+    function* view_merge() {
+      // TODO: two counters, merge with resolver
+    }
+    function* view_behaviors() {
+      // TODO: slider behavior, stepper from event, mapB/apply
+    }
+    function* view_tagging() {
+      // TODO: demonstrate tag and mapTag
+    }
+    function* view_higher_order() {
+      // TODO: spawn child streams and show switchE / mergeBind
+    }
+    function* view_loops() {
+      // TODO: implement stateful example using loopBehavior/loopEvent
+    }
+    function* view_io() {
+      // TODO: demonstrate output and observeE
+    }
+    function* view_app() {
+      // TODO: composite example combining many combinators
+    }
   </script>
 </body>
