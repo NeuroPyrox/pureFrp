@@ -7,6 +7,22 @@
 </head>
 <body>
   <script>
-
+    // List of reactives:
+    // input : ((a -> IO ()) -> IO ()) -> Event a
+    // never : Event ()
+    // mapE : Event a -> (a -> b) -> Event b
+    // filter : Event a -> (a -> bool) -> Event a
+    // merge : Event a -> Event b -> (a -> b -> c) -> (a -> c) -> (b -> c) -> Event c
+    // mapB : Behavior a -> (a -> b) -> Behavior b
+    // apply : Behavior a -> Behavior b -> (a -> b -> c) -> Behavior c
+    // mapTag : Event a -> Behavior b -> (a -> b -> c) -> Event c
+    // tag : Event a -> Behavior b -> Event b
+    // observeE : Event (Moment a) -> Event a
+    // output : Event a -> (a -> IO ()) -> Moment ()
+    // switchE : Event (Event a) -> Moment (Event a)
+    // stepper : a -> Event a -> Moment (Behavior a)
+    // mergeBind : Event (Event a) -> (Event a -> Event b) -> Moment (Event b)
+    // loopEvent : Moment (Event a)
+    // loopBehavior : Moment (Behavior a)
   </script>
 </body>
