@@ -112,9 +112,14 @@ function observeE(eventOfValuesOrFns) {
   return eventOfValuesOrFns.map(v => (v === nothing ? nothing : (typeof v === 'function' ? v() : v)));
 }
 
-function output(eventStream, handler) {
+function output(eventStream, handler, momentTime) {
   // semantics: collect handler results in an output stream (purely)
-  return eventStream.map(v => (v === nothing ? nothing : handler(v)));
+  // handler may accept the current momentTime for deterministic side-effects.
+  return eventStream.map((v, t) => {
+    if (v === nothing) return nothing;
+    if (t < (momentTime || 0)) return nothing;
+    return handler(v, momentTime);
+  });
 }
 
 function switchE(eventOfEvents) {
@@ -149,7 +154,6 @@ module.exports = {
   observeE,
   output,
   switchE,
-  input,
   never,
   loopEvent,
   // Behaviors

@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { mapE, filterE, mergeE, stepper, mapB, apply, nothing } = require('./semantics');
+const { mapE, filter, merge, stepper, mapB, apply, nothing } = require('./semantics');
 
 function arraysEqual(a, b) {
   if (a.length !== b.length) return false;
@@ -20,9 +20,9 @@ function arraysEqual(a, b) {
 // filterE test
 (function test_filterE() {
   const inEvents = ['ok', '', nothing, 'x'];
-  const out = filterE(inEvents, s => s.length > 0);
+  const out = filter(inEvents, s => s.length > 0);
   const expected = ['ok', nothing, nothing, 'x'];
-  assert.ok(arraysEqual(out, expected), 'filterE filters falsy strings');
+  assert.ok(arraysEqual(out, expected), 'filter filters falsy strings');
 })();
 
 // mergeE test
@@ -32,9 +32,9 @@ function arraysEqual(a, b) {
   const both = (x, y) => `both:${x}:${y}`;
   const left = x => `L:${x}`;
   const right = y => `R:${y}`;
-  const out = mergeE(a, b, both, left, right);
+  const out = merge(a, b, both, left, right);
   const expected = ['R:10', 'L:1', 'R:20', 'both:3:30'];
-  assert.ok(arraysEqual(out, expected), 'mergeE combines streams with handlers');
+  assert.ok(arraysEqual(out, expected), 'merge combines streams with handlers');
 })();
 
 // stepper test
