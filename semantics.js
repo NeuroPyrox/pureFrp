@@ -2,6 +2,7 @@
 // TODO one value per tick in behaviors
 // TODO moments
 // TODO looping using lazy streams
+// TODO use happy path
 // Using a custom "nothing" symbol to denote no-event for clarity
 // Minimal semantic model for FRP combinators (discrete ticks)
 // Event streams: one value per tick or `nothing` when no event occurs at that tick.
@@ -54,21 +55,23 @@ function merge(left, right, bothFn, leftFn, rightFn) {
   });
 }
 
-// stepper: initial value and an event stream -> behavior (sampled each tick)
-// semantics: behavior[t] is last event value up to and including tick t, starting with init
-// TODO don't update value until next tick
-// TODO rewrite in a more functional style
+// stepper: initial value and an event stream -> Moment (Behavior a)
+// Returns a function that, given a momentTime, yields the sampled behavior array.
 function stepper(init, eventStream) {
-  const out = [];
-  let current = init;
-  for (let t = 0; t < eventStream.length; t++) {
-    const v = eventStream[t];
-    if (v !== nothing) {
-      current = v;
+  return function stepperAt(momentTime) {
+    const out = [];
+    let current = init;
+    const minMoment = momentTime === undefined ? 0 : momentTime;
+    for (let t = 0; t < eventStream.length; t++) {
+      const v = eventStream[t];
+      // only apply event updates that occur at or after the momentTime
+      if (v !== nothing && t >= minMoment) {
+        current = v;
+      }
+      out.push(current);
     }
-    out.push(current);
-  }
-  return out;
+    return out;
+  };
 }
 
 function mapB(behavior, f) {
@@ -108,27 +111,30 @@ function tag(eventStream, behavior) {
   return mapTag(eventStream, behavior, (_e, b) => b);
 }
 
+// TODO input momentTime
 function observeE(eventOfValuesOrFns) {
-  return eventOfValuesOrFns.map(v => (v === nothing ? nothing : (typeof v === 'function' ? v() : v)));
+  return eventOfValuesOrFns.map(v => (v === nothing ? nothing : v()));
 }
 
+// TODO update semantics for an accumulation loop of outputs
 function output(eventStream, handler, momentTime) {
-  // semantics: collect handler results in an output stream (purely)
-  // handler may accept the current momentTime for deterministic side-effects.
   return eventStream.map((v, t) => {
     if (v === nothing) return nothing;
-    if (t < (momentTime || 0)) return nothing;
-    return handler(v, momentTime);
+    if (t < momentTime) return nothing;
+    return handler(v);
   });
 }
 
-function switchE(eventOfEvents) {
-  const n = eventOfEvents.length;
+function switchE(eventOfEvents, momentTime) {
   let current = null;
-  return Array.from({ length: n }, (_, t) => {
+  return Array.from({ length: eventOfEvents.length }, (_, t) => {
     const e = eventOfEvents[t];
-    if (e !== nothing) current = e;
-    return current ? (current[t] !== undefined ? current[t] : nothing) : nothing;
+    // Accept new parents only at or after the momentTime
+    if (e !== nothing && momentTime <= t) {
+      current = e;
+    }
+    // Read from the current parent for subsequent ticks
+    return current === null ? nothing : current[t];
   });
 }
 

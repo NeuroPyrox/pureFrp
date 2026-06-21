@@ -40,7 +40,7 @@ function arraysEqual(a, b) {
 // stepper test
 (function test_stepper() {
   const ev = [nothing, 'x', nothing, 'y', nothing];
-  const b = stepper('init', ev);
+  const b = stepper('init', ev)(0);
   const expected = ['init', 'x', 'x', 'y', 'y'];
   assert.deepStrictEqual(b, expected, 'stepper holds last event value');
 })();
