@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { mapE, filterE, mergeE, stepper, mapB, apply } = require('./semantics');
+const { mapE, filterE, mergeE, stepper, mapB, apply, nothing } = require('./semantics');
 
 function arraysEqual(a, b) {
   if (a.length !== b.length) return false;
@@ -11,24 +11,24 @@ function arraysEqual(a, b) {
 
 // mapE test
 (function test_mapE() {
-  const inEvents = [undefined, 'a', undefined, 'b'];
+  const inEvents = [nothing, 'a', nothing, 'b'];
   const out = mapE(inEvents, s => s.toUpperCase());
-  const expected = [undefined, 'A', undefined, 'B'];
+  const expected = [nothing, 'A', nothing, 'B'];
   assert.ok(arraysEqual(out, expected), 'mapE uppercases event values');
 })();
 
 // filterE test
 (function test_filterE() {
-  const inEvents = ['ok', '', undefined, 'x'];
+  const inEvents = ['ok', '', nothing, 'x'];
   const out = filterE(inEvents, s => s.length > 0);
-  const expected = ['ok', undefined, undefined, 'x'];
+  const expected = ['ok', nothing, nothing, 'x'];
   assert.ok(arraysEqual(out, expected), 'filterE filters falsy strings');
 })();
 
 // mergeE test
 (function test_mergeE() {
-  const a = [undefined, 1, undefined, 3]; // ticks 0..3
-  const b = [10, undefined, 20, 30];
+  const a = [nothing, 1, nothing, 3]; // ticks 0..3
+  const b = [10, nothing, 20, 30];
   const both = (x, y) => `both:${x}:${y}`;
   const left = x => `L:${x}`;
   const right = y => `R:${y}`;
@@ -39,7 +39,7 @@ function arraysEqual(a, b) {
 
 // stepper test
 (function test_stepper() {
-  const ev = [undefined, 'x', undefined, 'y', undefined];
+  const ev = [nothing, 'x', nothing, 'y', nothing];
   const b = stepper('init', ev);
   const expected = ['init', 'x', 'x', 'y', 'y'];
   assert.deepStrictEqual(b, expected, 'stepper holds last event value');

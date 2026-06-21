@@ -1,16 +1,36 @@
-// TODO use null instead of undefined
+// Using a custom "nothing" symbol to denote no-event for clarity
 // TODO order functions to be in the same order at index.html
 // TODO one value per tick in behaviors
 // Minimal semantic model for FRP combinators (discrete ticks)
-// Event streams: one value per tick or undefined when no event occurs at that tick.
+// Event streams: one value per tick or `nothing` when no event occurs at that tick.
 // Behavior: arrays of sampled values per tick (same length as simulated ticks).
 
+const nothing = Symbol('nothing');
+
+// List of reactives:
+// input : ((a -> IO ()) -> IO ()) -> Event a
+// never : Event ()
+// mapE : Event a -> (a -> b) -> Event b
+// filter : Event a -> (a -> bool) -> Event a
+// merge : Event a -> Event b -> (a -> b -> c) -> (a -> c) -> (b -> c) -> Event c
+// mapB : Behavior a -> (a -> b) -> Behavior b
+// apply : Behavior a -> Behavior b -> (a -> b -> c) -> Behavior c
+// mapTag : Event a -> Behavior b -> (a -> b -> c) -> Event c
+// tag : Event a -> Behavior b -> Event b
+// observeE : Event (Moment a) -> Event a
+// output : Event a -> (a -> IO ()) -> Moment ()
+// switchE : Event (Event a) -> Moment (Event a)
+// stepper : a -> Event a -> Moment (Behavior a)
+// mergeBind : Event (Event a) -> (Event a -> Event b) -> Moment (Event b)
+// loopEvent : Moment (Event a)
+// loopBehavior : Moment (Behavior a)
+
 function mapE(eventStream, f) {
-  return eventStream.map(v => (v === undefined ? undefined : f(v)));
+  return eventStream.map(v => (v === nothing ? nothing : f(v)));
 }
 
 function filterE(eventStream, pred) {
-  return eventStream.map(v => (v !== undefined && pred(v) ? v : undefined));
+  return eventStream.map(v => (v !== nothing && pred(v) ? v : nothing));
 }
 
 // merge two event streams with handlers:
@@ -23,13 +43,13 @@ function mergeE(left, right, bothFn, leftFn, rightFn) {
   return Array.from({ length: n }, (_, t) => {
     const l = left[t];
     const r = right[t];
-    return l !== undefined && r !== undefined
+    return l !== nothing && r !== nothing
       ? bothFn(l, r)
-      : l !== undefined
+      : l !== nothing
       ? leftFn(l)
-      : r !== undefined
+      : r !== nothing
       ? rightFn(r)
-      : undefined;
+      : nothing;
   });
 }
 
@@ -42,7 +62,7 @@ function stepper(init, eventStream) {
   let current = init;
   for (let t = 0; t < eventStream.length; t++) {
     const v = eventStream[t];
-    if (v !== undefined) {
+    if (v !== nothing) {
       current = v;
     }
     out.push(current);
@@ -68,4 +88,4 @@ function apply(behaviorF, behaviorA) {
   return out;
 }
 
-module.exports = { mapE, filterE, mergeE, stepper, mapB, apply };
+module.exports = { mapE, filterE, mergeE, stepper, mapB, apply, nothing };
