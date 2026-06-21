@@ -18,29 +18,25 @@ function filterE(eventStream, pred) {
 // leftFn(a) when only left has a value
 // rightFn(b) when only right has a value
 // Output is one value per tick (or undefined)
-// TODO rewrite in a functional style
 function mergeE(left, right, bothFn, leftFn, rightFn) {
   const n = Math.max(left.length, right.length);
-  const out = new Array(n);
-  for (let t = 0; t < n; t++) {
+  return Array.from({ length: n }, (_, t) => {
     const l = left[t];
     const r = right[t];
-    if (l !== undefined && r !== undefined) {
-      out[t] = bothFn(l, r);
-    } else if (l !== undefined) {
-      out[t] = leftFn(l);
-    } else if (r !== undefined) {
-      out[t] = rightFn(r);
-    } else {
-      out[t] = undefined;
-    }
-  }
-  return out;
+    return l !== undefined && r !== undefined
+      ? bothFn(l, r)
+      : l !== undefined
+      ? leftFn(l)
+      : r !== undefined
+      ? rightFn(r)
+      : undefined;
+  });
 }
 
 // stepper: initial value and an event stream -> behavior (sampled each tick)
 // semantics: behavior[t] is last event value up to and including tick t, starting with init
 // TODO don't update value until next tick
+// TODO rewrite in a more functional style
 function stepper(init, eventStream) {
   const out = [];
   let current = init;
@@ -60,6 +56,7 @@ function mapB(behavior, f) {
 
 // apply: behaviorF (values functions) applied to behaviorA values -> behaviorC
 // TODO use type signature defined in index.html
+// TODO rewrite in a more functional style
 function apply(behaviorF, behaviorA) {
   const n = Math.max(behaviorF.length, behaviorA.length);
   const out = new Array(n);
