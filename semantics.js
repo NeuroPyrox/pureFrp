@@ -1,6 +1,8 @@
-// Using a custom "nothing" symbol to denote no-event for clarity
 // TODO order functions to be in the same order at index.html
 // TODO one value per tick in behaviors
+// TODO moments
+// TODO looping using lazy streams
+// Using a custom "nothing" symbol to denote no-event for clarity
 // Minimal semantic model for FRP combinators (discrete ticks)
 // Event streams: one value per tick or `nothing` when no event occurs at that tick.
 // Behavior: arrays of sampled values per tick (same length as simulated ticks).
@@ -21,7 +23,6 @@ const nothing = Symbol('nothing');
 // output : Event a -> (a -> IO ()) -> Moment ()
 // switchE : Event (Event a) -> Moment (Event a)
 // stepper : a -> Event a -> Moment (Behavior a)
-// mergeBind : Event (Event a) -> (Event a -> Event b) -> Moment (Event b)
 // loopEvent : Moment (Event a)
 // loopBehavior : Moment (Behavior a)
 
@@ -29,7 +30,7 @@ function mapE(eventStream, f) {
   return eventStream.map(v => (v === nothing ? nothing : f(v)));
 }
 
-function filterE(eventStream, pred) {
+function filter(eventStream, pred) {
   return eventStream.map(v => (v !== nothing && pred(v) ? v : nothing));
 }
 
@@ -38,7 +39,7 @@ function filterE(eventStream, pred) {
 // leftFn(a) when only left has a value
 // rightFn(b) when only right has a value
 // Output is one value per tick (or undefined)
-function mergeE(left, right, bothFn, leftFn, rightFn) {
+function merge(left, right, bothFn, leftFn, rightFn) {
   const n = Math.max(left.length, right.length);
   return Array.from({ length: n }, (_, t) => {
     const l = left[t];
@@ -88,4 +89,72 @@ function apply(behaviorF, behaviorA) {
   return out;
 }
 
-module.exports = { mapE, filterE, mergeE, stepper, mapB, apply, nothing };
+// Additional helpers and full reactive implementations
+
+function never(length) {
+  return Array.from({ length }, () => nothing);
+}
+
+function mapTag(eventStream, behavior, f) {
+  const n = Math.max(eventStream.length, behavior.length);
+  return Array.from({ length: n }, (_, t) => {
+    const e = eventStream[t];
+    const b = behavior[t];
+    return e !== nothing ? f(e, b) : nothing;
+  });
+}
+
+function tag(eventStream, behavior) {
+  return mapTag(eventStream, behavior, (_e, b) => b);
+}
+
+function observeE(eventOfValuesOrFns) {
+  return eventOfValuesOrFns.map(v => (v === nothing ? nothing : (typeof v === 'function' ? v() : v)));
+}
+
+function output(eventStream, handler) {
+  // semantics: collect handler results in an output stream (purely)
+  return eventStream.map(v => (v === nothing ? nothing : handler(v)));
+}
+
+function switchE(eventOfEvents) {
+  const n = eventOfEvents.length;
+  let current = null;
+  return Array.from({ length: n }, (_, t) => {
+    const e = eventOfEvents[t];
+    if (e !== nothing) current = e;
+    return current ? (current[t] !== undefined ? current[t] : nothing) : nothing;
+  });
+}
+
+function loopEvent(length) {
+  // placeholder: returns a zeroed event stream for fixed-point wiring.
+  // Real looping requires a fixed-point solver in the Moment semantics.
+  return Array.from({ length }, () => nothing);
+}
+
+function loopBehavior(length, init) {
+  // placeholder: returns a behavior initialized to init across length.
+  return Array.from({ length }, () => init);
+}
+
+module.exports = {
+  nothing,
+  // Events
+  mapE,
+  filter,
+  merge,
+  mapTag,
+  tag,
+  observeE,
+  output,
+  switchE,
+  input,
+  never,
+  loopEvent,
+  // Behaviors
+  stepper,
+  mapB,
+  apply,
+  loopBehavior,
+};
