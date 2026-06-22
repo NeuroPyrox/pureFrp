@@ -111,31 +111,39 @@ function tag(eventStream, behavior) {
   return mapTag(eventStream, behavior, (_e, b) => b);
 }
 
-// TODO input momentTime
-function observeE(eventOfValuesOrFns) {
-  return eventOfValuesOrFns.map(v => (v === nothing ? nothing : v()));
+// observeE: Event (Moment a) -> Event a
+// Passes the current tick index as momentTime to the provided moment function
+function observeE(eventOfMomentFns) {
+  return eventOfMomentFns.map((fn, t) => {
+    if (fn === nothing) return nothing;
+    return fn(t);
+  });
 }
 
 // TODO update semantics for an accumulation loop of outputs
-function output(eventStream, handler, momentTime) {
-  return eventStream.map((v, t) => {
-    if (v === nothing) return nothing;
-    if (t < momentTime) return nothing;
-    return handler(v);
-  });
+function output(eventStream, handler) {
+  return function outputAt(momentTime) {
+    return eventStream.map((v, t) => {
+      if (v === nothing) return nothing;
+      if (t < momentTime) return nothing;
+      return handler(v, momentTime);
+    });
+  };
 }
 
-function switchE(eventOfEvents, momentTime) {
-  let current = null;
-  return Array.from({ length: eventOfEvents.length }, (_, t) => {
-    const e = eventOfEvents[t];
-    // Accept new parents only at or after the momentTime
-    if (e !== nothing && momentTime <= t) {
-      current = e;
-    }
-    // Read from the current parent for subsequent ticks
-    return current === null ? nothing : current[t];
-  });
+function switchE(eventOfEvents) {
+  return function switchEAt(momentTime) {
+    let current = null;
+    return Array.from({ length: eventOfEvents.length }, (_, t) => {
+      const e = eventOfEvents[t];
+      // Accept new parents only at or after the momentTime
+      if (e !== nothing && momentTime <= t) {
+        current = e;
+      }
+      // Read from the current parent for subsequent ticks
+      return current === null ? nothing : current[t];
+    });
+  };
 }
 
 function loopEvent(length) {
