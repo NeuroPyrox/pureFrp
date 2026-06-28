@@ -25,6 +25,42 @@
     // loopEvent : Moment (Event a)
     // loopBehavior : Moment (Behavior a)
 
+    // Re-implementation plan for chronomancy.js and html.js:
+    // Goal: produce a clear, correct, and readable reference implementation first,
+    // then optimize for performance only where measurements show a need.
+    //
+    // Steps:
+    // 1) Inventory the public APIs used by frpExample (chronomancy.js exports and
+    //    html.js helpers). Write a concise spec of each function's contract.
+    // 2) Implement core FRP primitives (unoptimized, reference-quality):
+    //    - Event and Behavior constructors, input, never
+    //    - mapE, filter, merge, mapB, apply, tag, mapTag
+    //    - stepper, loopEvent, loopBehavior, switchE, mergeBind
+    //    - observeE and output (Moment scheduling / transactional semantics)
+    // 3) Add a simple scheduler / Moment implementation ensuring deterministic
+    //    update order and no extra allocations (clarify ordering rules in comments).
+    // 4) Implement html.js on top of those primitives: DOM element wrappers,
+    //    inputs/buttons/pull/table helpers, and utility combinators used by examples.
+    // 5) Port the frpExample interactive examples and run them as tests.
+    // 6) Write microbenchmarks for hot paths (table updates, many listeners).
+    // 7) Iterate: fix correctness issues found by examples/tests, then optimize.
+    //
+    // Optimization note (many children/parents):
+    // - Do not prematurely optimize. Complete a correct unoptimized version first.
+    // - If benchmarks show pain points when sinks/sources have large fan-in/fan-out,
+    //   consider these targeted optimizations:
+    //     * Batch attach/detach APIs for adding/removing many children at once.
+    //     * Use compact arrays or typed arrays for listener lists and recycle slots
+    //       instead of creating lots of short-lived closures.
+    //     * Delta propagation: only notify dependents with actual changes.
+    //     * Hierarchical grouping of listeners to reduce traversal cost.
+    //     * Use weak maps or explicit dispose APIs to avoid leaks from many edges.
+    // - Measure before and after; optimize specific hot spots (e.g., table diffs)
+    //   rather than the general case.
+    //
+    // Recommendation: implement the unoptimized reference, add tests and
+    // benchmarks, then apply focused optimizations with measurable gains.
+
     // Documentation plan: series of HTML "views" that demonstrate each combinator.
     // Style: match generator-based html.js usage from frpExample/index.html.
     // Each view below is described and given a placeholder generator function name.
