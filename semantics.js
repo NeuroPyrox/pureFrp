@@ -1,6 +1,4 @@
-// TODO order functions to be in the same order at index.html
 // TODO one value per tick in behaviors
-// TODO moments
 // TODO looping using lazy streams
 // TODO use happy path
 // Using a custom "nothing" symbol to denote no-event for clarity
@@ -11,21 +9,29 @@
 const nothing = Symbol('nothing');
 
 // List of reactives:
-// input : ((a -> IO ()) -> IO ()) -> Event a
+// 
+// Event
 // never : Event ()
 // mapE : Event a -> (a -> b) -> Event b
 // filter : Event a -> (a -> bool) -> Event a
 // merge : Event a -> Event b -> (a -> b -> c) -> (a -> c) -> (b -> c) -> Event c
+//
+// Behavior
 // mapB : Behavior a -> (a -> b) -> Behavior b
 // apply : Behavior a -> Behavior b -> (a -> b -> c) -> Behavior c
 // mapTag : Event a -> Behavior b -> (a -> b -> c) -> Event c
 // tag : Event a -> Behavior b -> Event b
+// 
+// Moment
 // observeE : Event (Moment a) -> Event a
-// output : Event a -> (a -> IO ()) -> Moment ()
 // switchE : Event (Event a) -> Moment (Event a)
 // stepper : a -> Event a -> Moment (Behavior a)
+//
+// Not implemented yet TODO
 // loopEvent : Moment (Event a)
 // loopBehavior : Moment (Behavior a)
+// input : ((a -> IO ()) -> IO ()) -> Event a
+// output : Event a -> (a -> IO ()) -> Moment ()
 
 const never = [];
 
@@ -55,25 +61,6 @@ function merge(left, right, bothFn, leftFn, rightFn) {
       ? rightFn(r)
       : nothing;
   });
-}
-
-// stepper: initial value and an event stream -> Moment (Behavior a)
-// Returns a function that, given a momentTime, yields the sampled behavior array.
-function stepper(init, eventStream) {
-  return function stepperAt(momentTime) {
-    const out = [];
-    let current = init;
-    const minMoment = momentTime === undefined ? 0 : momentTime;
-    for (let t = 0; t < eventStream.length; t++) {
-      const v = eventStream[t];
-      // only apply event updates that occur at or after the momentTime
-      if (v !== nothing && t >= minMoment) {
-        current = v;
-      }
-      out.push(current);
-    }
-    return out;
-  };
 }
 
 function mapB(behavior, f) {
@@ -141,6 +128,25 @@ function switchE(eventOfEvents) {
       // Read from the current parent for subsequent ticks
       return current === null ? nothing : current[t];
     });
+  };
+}
+
+// stepper: initial value and an event stream -> Moment (Behavior a)
+// Returns a function that, given a momentTime, yields the sampled behavior array.
+function stepper(init, eventStream) {
+  return function stepperAt(momentTime) {
+    const out = [];
+    let current = init;
+    const minMoment = momentTime === undefined ? 0 : momentTime;
+    for (let t = 0; t < eventStream.length; t++) {
+      const v = eventStream[t];
+      // only apply event updates that occur at or after the momentTime
+      if (v !== nothing && t >= minMoment) {
+        current = v;
+      }
+      out.push(current);
+    }
+    return out;
   };
 }
 
