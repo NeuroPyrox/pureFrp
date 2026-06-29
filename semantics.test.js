@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { mapE, filter, merge, stepper, mapB, apply, nothing } = require('./semantics');
+const { nothing, mapE, filter, merge, mapB, apply, stepper } = require('./semantics');
 
 function arraysEqual(a, b) {
   if (a.length !== b.length) return false;
