@@ -141,7 +141,7 @@ function stepper(init, eventStream) {
   };
 }
 
-module.exports = {
+export { 
   nothing,
   // Events
   never,

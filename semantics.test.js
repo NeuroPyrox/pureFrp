@@ -1,5 +1,5 @@
-const assert = require('assert');
-const { nothing, mapE, filter, merge, mapB, apply, stepper } = require('./semantics');
+import * as assert from "assert";
+import { nothing, mapE, filter, merge, mapB, apply, stepper } from "./semantics.js";
 
 // mapE test
 (function test_mapE() {
