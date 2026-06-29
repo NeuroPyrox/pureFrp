@@ -27,6 +27,8 @@ const nothing = Symbol('nothing');
 // loopEvent : Moment (Event a)
 // loopBehavior : Moment (Behavior a)
 
+const never = [];
+
 function mapE(eventStream, f) {
   return eventStream.map(v => (v === nothing ? nothing : f(v)));
 }
@@ -93,10 +95,6 @@ function apply(behaviorF, behaviorA) {
 }
 
 // Additional helpers and full reactive implementations
-
-function never(length) {
-  return Array.from({ length }, () => nothing);
-}
 
 function mapTag(eventStream, behavior, f) {
   const n = Math.max(eventStream.length, behavior.length);
