@@ -31,8 +31,8 @@ function mapE(eventStream, f) {
   return eventStream.map(v => (v === nothing ? nothing : f(v)));
 }
 
-function filter(eventStream, pred) {
-  return eventStream.map(v => (v !== nothing && pred(v) ? v : nothing));
+function filter(eventStream, predicate) {
+  return eventStream.map(v => (v !== nothing && predicate(v) ? v : nothing));
 }
 
 // merge two event streams with handlers:
