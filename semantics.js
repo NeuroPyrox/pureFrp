@@ -105,17 +105,6 @@ function observeE(eventOfMomentFns) {
   });
 }
 
-// TODO update semantics for an accumulation loop of outputs
-function output(eventStream, handler) {
-  return function outputAt(momentTime) {
-    return eventStream.map((v, t) => {
-      if (v === nothing) return nothing;
-      if (t < momentTime) return nothing;
-      return handler(v, momentTime);
-    });
-  };
-}
-
 function switchE(eventOfEvents) {
   return function switchEAt(momentTime) {
     let current = null;
@@ -148,17 +137,6 @@ function stepper(init, eventStream) {
     }
     return out;
   };
-}
-
-function loopEvent(length) {
-  // placeholder: returns a zeroed event stream for fixed-point wiring.
-  // Real looping requires a fixed-point solver in the Moment semantics.
-  return Array.from({ length }, () => nothing);
-}
-
-function loopBehavior(length, init) {
-  // placeholder: returns a behavior initialized to init across length.
-  return Array.from({ length }, () => init);
 }
 
 module.exports = {
