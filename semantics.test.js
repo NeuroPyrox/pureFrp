@@ -1,20 +1,12 @@
 const assert = require('assert');
 const { nothing, mapE, filter, merge, mapB, apply, stepper } = require('./semantics');
 
-function arraysEqual(a, b) {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
-}
-
 // mapE test
 (function test_mapE() {
   const inEvents = [nothing, 'a', nothing, 'b'];
   const out = mapE(inEvents, s => s.toUpperCase());
   const expected = [nothing, 'A', nothing, 'B'];
-  assert.ok(arraysEqual(out, expected), 'mapE uppercases event values');
+  assert.deepStrictEqual(out, expected, 'mapE uppercases event values');
 })();
 
 // filter test
@@ -22,7 +14,7 @@ function arraysEqual(a, b) {
   const inEvents = ['ok', '', nothing, 'x'];
   const out = filter(inEvents, s => s.length > 0);
   const expected = ['ok', nothing, nothing, 'x'];
-  assert.ok(arraysEqual(out, expected), 'filter filters falsy strings');
+  assert.deepStrictEqual(out, expected, 'filter filters falsy strings');
 })();
 
 // merge test
@@ -34,7 +26,7 @@ function arraysEqual(a, b) {
   const right = y => `R:${y}`;
   const out = merge(a, b, both, left, right);
   const expected = ['R:10', 'L:1', 'R:20', 'both:3:30'];
-  assert.ok(arraysEqual(out, expected), 'merge combines streams with handlers');
+  assert.deepStrictEqual(out, expected, 'merge combines streams with handlers');
 })();
 
 // stepper test
