@@ -17,16 +17,16 @@ function arraysEqual(a, b) {
   assert.ok(arraysEqual(out, expected), 'mapE uppercases event values');
 })();
 
-// filterE test
-(function test_filterE() {
+// filter test
+(function test_filter() {
   const inEvents = ['ok', '', nothing, 'x'];
   const out = filter(inEvents, s => s.length > 0);
   const expected = ['ok', nothing, nothing, 'x'];
   assert.ok(arraysEqual(out, expected), 'filter filters falsy strings');
 })();
 
-// mergeE test
-(function test_mergeE() {
+// merge test
+(function test_merge() {
   const a = [nothing, 1, nothing, 3]; // ticks 0..3
   const b = [10, nothing, 20, 30];
   const both = (x, y) => `both:${x}:${y}`;
