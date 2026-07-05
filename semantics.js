@@ -53,8 +53,10 @@ function filter(eventStream, predicate) {
 function merge(left, right, bothFn, leftFn, rightFn) {
   const n = Math.max(left.length, right.length);
   return Array.from({ length: n }, (_, t) => {
-    const l = left[t] !== undefined ? left[t] : nothing;
-    const r = right[t] !== undefined ? right[t] : nothing;
+    const leftHas = t < left.length;
+    const rightHas = t < right.length;
+    const l = leftHas ? left[t] : nothing;
+    const r = rightHas ? right[t] : nothing;
     return l !== nothing && r !== nothing
       ? bothFn(l, r)
       : l !== nothing

@@ -55,6 +55,22 @@ import { nothing, mapE, filter, merge, mapB, apply, stepper } from "./semantics.
   assert.deepStrictEqual(out, expected, 'merge handles right shorter than left');
 })();
 
+// merge test with undefined values treated as normal values
+(function test_merge_undefined_values() {
+  const a = [1, undefined, 3]; // mixed defined and undefined
+  const b = [10, 20, undefined]; // mixed defined and undefined
+  const both = (x, y) => `both:${x}:${y}`;
+  const left = x => `L:${x}`;
+  const right = y => `R:${y}`;
+  const out = merge(a, b, both, left, right);
+  // Expected: undefined is treated as a normal value, not nothing
+  // Tick 0: a=1, b=10 -> both
+  // Tick 1: a=undefined, b=20 -> both (undefined is a value)
+  // Tick 2: a=3, b=undefined -> both (undefined is a value)
+  const expected = ['both:1:10', 'both:undefined:20', 'both:3:undefined'];
+  assert.deepStrictEqual(out, expected, 'merge treats undefined as a normal value');
+})();
+
 // stepper test
 (function test_stepper() {
   const ev = [nothing, 'x', nothing, 'y', nothing];
