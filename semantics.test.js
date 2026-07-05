@@ -29,6 +29,32 @@ import { nothing, mapE, filter, merge, mapB, apply, stepper } from "./semantics.
   assert.deepStrictEqual(out, expected, 'merge combines streams with handlers');
 })();
 
+// merge test with mismatched lengths
+(function test_merge_mismatched_lengths_left_shorter() {
+  const a = [1, 2]; // shorter array
+  const b = [10, 20, 30, 40]; // longer array
+  const both = (x, y) => `both:${x}:${y}`;
+  const left = x => `L:${x}`;
+  const right = y => `R:${y}`;
+  const out = merge(a, b, both, left, right);
+  // Expected: ticks 0-1 have both values, ticks 2-3 have only b values
+  const expected = ['both:1:10', 'both:2:20', 'R:30', 'R:40'];
+  assert.deepStrictEqual(out, expected, 'merge handles left shorter than right');
+})();
+
+// merge test with mismatched lengths, reversed
+(function test_merge_mismatched_lengths_right_shorter() {
+  const a = [1, 2, 3, 4]; // longer array
+  const b = [10, 20]; // shorter array
+  const both = (x, y) => `both:${x}:${y}`;
+  const left = x => `L:${x}`;
+  const right = y => `R:${y}`;
+  const out = merge(a, b, both, left, right);
+  // Expected: ticks 0-1 have both values, ticks 2-3 have only a values
+  const expected = ['both:1:10', 'both:2:20', 'L:3', 'L:4'];
+  assert.deepStrictEqual(out, expected, 'merge handles right shorter than left');
+})();
+
 // stepper test
 (function test_stepper() {
   const ev = [nothing, 'x', nothing, 'y', nothing];

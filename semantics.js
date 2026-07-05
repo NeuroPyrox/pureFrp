@@ -33,6 +33,8 @@ const nothing = Symbol('nothing');
 // input : ((a -> IO ()) -> IO ()) -> Event a
 // output : Event a -> (a -> IO ()) -> Moment ()
 
+// Events
+
 const never = [];
 
 function mapE(eventStream, f) {
@@ -47,14 +49,12 @@ function filter(eventStream, predicate) {
 // bothFn(a,b) when both have values at same tick
 // leftFn(a) when only left has a value
 // rightFn(b) when only right has a value
-// Output is one value per tick (or undefined)
+// Output is one value per tick (or nothing)
 function merge(left, right, bothFn, leftFn, rightFn) {
   const n = Math.max(left.length, right.length);
   return Array.from({ length: n }, (_, t) => {
-    // There's a bug here with [bothFn] being called when [left.length <= t]
-    // or when [right.length <= t], but I'm ignoring it until tests reveal it
-    const l = left[t];
-    const r = right[t];
+    const l = left[t] !== undefined ? left[t] : nothing;
+    const r = right[t] !== undefined ? right[t] : nothing;
     return l !== nothing && r !== nothing
       ? bothFn(l, r)
       : l !== nothing
@@ -65,11 +65,14 @@ function merge(left, right, bothFn, leftFn, rightFn) {
   });
 }
 
+// Behaviors
+
 function mapB(behavior, f) {
   return behavior.map(f);
 }
 
 // apply: behaviorF (values functions) applied to behaviorA values -> behaviorC
+// TODO write tests to expose the issues here
 // TODO use type signature defined in index.html
 // TODO rewrite in a more functional style
 function apply(behaviorF, behaviorA) {
@@ -83,7 +86,6 @@ function apply(behaviorF, behaviorA) {
   return out;
 }
 
-// Additional helpers and full reactive implementations
 
 function mapTag(eventStream, behavior, f) {
   const n = Math.max(eventStream.length, behavior.length);
@@ -97,6 +99,8 @@ function mapTag(eventStream, behavior, f) {
 function tag(eventStream, behavior) {
   return mapTag(eventStream, behavior, (_e, b) => b);
 }
+
+// Moments
 
 // observeE: Event (Moment a) -> Event a
 // Passes the current tick index as momentTime to the provided moment function
