@@ -73,17 +73,14 @@ function mapB(f, behavior) {
   return behavior.map(f);
 }
 
-// TODO user Array.from
 // apply: (a -> b -> c) -> Behavior a -> Behavior b -> Behavior c
 function apply(f, behaviorA, behaviorB) {
   const n = Math.max(behaviorA.length, behaviorB.length);
-  const out = new Array(n);
-  for (let i = 0; i < n; i++) {
+  return Array.from({ length: n }, (_, i) => {
     const a = i < behaviorA.length ? behaviorA[i] : behaviorA[behaviorA.length - 1];
     const b = i < behaviorB.length ? behaviorB[i] : behaviorB[behaviorB.length - 1];
-    out[i] = f(a, b);
-  }
-  return out;
+    return f(a, b);
+  });
 }
 
 
