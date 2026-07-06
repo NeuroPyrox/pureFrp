@@ -1,28 +1,20 @@
-// TODO one value per tick in behaviors
-// TODO looping using lazy streams
-// TODO use happy path
-// Using a custom "nothing" symbol to denote no-event for clarity
-// Minimal semantic model for FRP combinators (discrete ticks)
-// Event streams: one value per tick or `nothing` when no event occurs at that tick.
-// Behavior: arrays of sampled values per tick (same length as simulated ticks).
-
 const nothing = Symbol('nothing');
 
 // List of reactives:
 // 
-// Event
+// Event = (int -> Maybe a)
 // never : Event ()
 // mapE : (a -> b) -> Event a -> Event b
 // filter : (a -> bool) -> Event a -> Event a
 // merge : (a -> b -> c) -> (a -> c) -> (b -> c) -> Event a -> Event b -> Event c
 //
-// Behavior
+// Behavior = (int -> a)
 // mapB : (a -> b) -> Behavior a -> Behavior b
 // apply : (a -> b -> c) -> Behavior a -> Behavior b -> Behavior c
 // mapTag : (a -> b -> c) -> Event a -> Behavior b -> Event c
 // tag : Event a -> Behavior b -> Event b
 // 
-// Moment
+// Moment = (int -> a)
 // observeE : Event (Moment a) -> Event a
 // switchE : Event (Event a) -> Moment (Event a)
 // stepper : a -> Event a -> Moment (Behavior a)
@@ -35,28 +27,26 @@ const nothing = Symbol('nothing');
 
 // Events
 
-const never = [];
+const never = t => nothing;
 
-function mapE(f, eventStream) {
-  return eventStream.map(v => (v === nothing ? nothing : f(v)));
+function mapE(f, event) {
+  return t => {
+    const v = event(t);
+    return v === nothing ? nothing : f(v);
+  };
 }
 
-function filter(predicate, eventStream) {
-  return eventStream.map(v => (v !== nothing && predicate(v) ? v : nothing));
+function filter(predicate, event) {
+  return t => {
+    const v = event(t);
+    return v !== nothing && predicate(v) ? v : nothing;
+  };
 }
 
-// merge two event streams with handlers:
-// bothFn(a,b) when both have values at same tick
-// leftFn(a) when only left has a value
-// rightFn(b) when only right has a value
-// Output is one value per tick (or nothing)
 function merge(bothFn, leftFn, rightFn, left, right) {
-  const n = Math.max(left.length, right.length);
-  return Array.from({ length: n }, (_, t) => {
-    const leftHas = t < left.length;
-    const rightHas = t < right.length;
-    const l = leftHas ? left[t] : nothing;
-    const r = rightHas ? right[t] : nothing;
+  return t => {
+    const l = left(t);
+    const r = right(t);
     return l !== nothing && r !== nothing
       ? bothFn(l, r)
       : l !== nothing
@@ -64,37 +54,30 @@ function merge(bothFn, leftFn, rightFn, left, right) {
       : r !== nothing
       ? rightFn(r)
       : nothing;
-  });
+  };
 }
 
 // Behaviors
 
 function mapB(f, behavior) {
-  return behavior.map(f);
+  return t => f(behavior(t));
 }
 
 // apply: (a -> b -> c) -> Behavior a -> Behavior b -> Behavior c
 function apply(f, behaviorA, behaviorB) {
-  const n = Math.max(behaviorA.length, behaviorB.length);
-  return Array.from({ length: n }, (_, i) => {
-    const a = i < behaviorA.length ? behaviorA[i] : behaviorA[behaviorA.length - 1];
-    const b = i < behaviorB.length ? behaviorB[i] : behaviorB[behaviorB.length - 1];
-    return f(a, b);
-  });
+  return t => f(behaviorA(t), behaviorB(t));
 }
 
 
-function mapTag(f, eventStream, behavior) {
-  const n = Math.max(eventStream.length, behavior.length);
-  return Array.from({ length: n }, (_, t) => {
-    const e = t < eventStream.length ? eventStream[t] : nothing;
-    const b = t < behavior.length ? behavior[t] : behavior[behavior.length - 1];
-    return e !== nothing ? f(e, b) : nothing;
-  });
+function mapTag(f, event, behavior) {
+  return t => {
+    const e = event(t);
+    return e !== nothing ? f(e, behavior(t)) : nothing;
+  };
 }
 
-function tag(eventStream, behavior) {
-  return mapTag((_e, b) => b, eventStream, behavior);
+function tag(event, behavior) {
+  return mapTag((_e, b) => b, event, behavior);
 }
 
 // Moments
@@ -102,43 +85,43 @@ function tag(eventStream, behavior) {
 // observeE: Event (Moment a) -> Event a
 // Passes the current tick index as momentTime to the provided moment function
 function observeE(eventOfMomentFns) {
-  return eventOfMomentFns.map((fn, t) => {
+  return t => {
+    const fn = eventOfMomentFns(t);
     if (fn === nothing) return nothing;
     return fn(t);
-  });
+  };
 }
 
 function switchE(eventOfEvents) {
   return function switchEAt(momentTime) {
-    let current = null;
-    return Array.from({ length: eventOfEvents.length }, (_, t) => {
-      const e = eventOfEvents[t];
-      // Accept new parents only at or after the momentTime
-      if (e !== nothing && momentTime <= t) {
-        current = e;
+    return t => {
+      if (t < momentTime) return nothing;
+      let current = null;
+      for (let s = momentTime; s <= t; s++) {
+        const e = eventOfEvents(s);
+        if (e !== nothing) {
+          current = e;
+        }
       }
-      // Read from the current parent for subsequent ticks
-      return current === null ? nothing : current[t];
-    });
+      return current === null ? nothing : current(t);
+    };
   };
 }
 
 // stepper: initial value and an event stream -> Moment (Behavior a)
-// Returns a function that, given a momentTime, yields the sampled behavior array.
-function stepper(init, eventStream) {
+// Returns a function that, given a momentTime, yields the behavior function.
+function stepper(init, event) {
   return function stepperAt(momentTime) {
-    const out = [];
-    let current = init;
-    const minMoment = momentTime === undefined ? 0 : momentTime;
-    for (let t = 0; t < eventStream.length; t++) {
-      const v = eventStream[t];
-      // only apply event updates that occur at or after the momentTime
-      if (v !== nothing && t >= minMoment) {
-        current = v;
+    return t => {
+      let current = init;
+      for (let s = momentTime; s <= t; s++) {
+        const v = event(s);
+        if (v !== nothing) {
+          current = v;
+        }
       }
-      out.push(current);
-    }
-    return out;
+      return current;
+    };
   };
 }
 
