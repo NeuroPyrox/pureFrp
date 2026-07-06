@@ -12,14 +12,14 @@ const nothing = Symbol('nothing');
 // 
 // Event
 // never : Event ()
-// mapE : Event a -> (a -> b) -> Event b
-// filter : Event a -> (a -> bool) -> Event a
-// merge : Event a -> Event b -> (a -> b -> c) -> (a -> c) -> (b -> c) -> Event c
+// mapE : (a -> b) -> Event a -> Event b
+// filter : (a -> bool) -> Event a -> Event a
+// merge : (a -> b -> c) -> (a -> c) -> (b -> c) -> Event a -> Event b -> Event c
 //
 // Behavior
-// mapB : Behavior a -> (a -> b) -> Behavior b
-// apply : Behavior a -> Behavior b -> (a -> b -> c) -> Behavior c
-// mapTag : Event a -> Behavior b -> (a -> b -> c) -> Event c
+// mapB : (a -> b) -> Behavior a -> Behavior b
+// apply : (a -> b -> c) -> Behavior a -> Behavior b -> Behavior c
+// mapTag : (a -> b -> c) -> Event a -> Behavior b -> Event c
 // tag : Event a -> Behavior b -> Event b
 // 
 // Moment
@@ -37,11 +37,11 @@ const nothing = Symbol('nothing');
 
 const never = [];
 
-function mapE(eventStream, f) {
+function mapE(f, eventStream) {
   return eventStream.map(v => (v === nothing ? nothing : f(v)));
 }
 
-function filter(eventStream, predicate) {
+function filter(predicate, eventStream) {
   return eventStream.map(v => (v !== nothing && predicate(v) ? v : nothing));
 }
 
@@ -50,7 +50,7 @@ function filter(eventStream, predicate) {
 // leftFn(a) when only left has a value
 // rightFn(b) when only right has a value
 // Output is one value per tick (or nothing)
-function merge(left, right, bothFn, leftFn, rightFn) {
+function merge(bothFn, leftFn, rightFn, left, right) {
   const n = Math.max(left.length, right.length);
   return Array.from({ length: n }, (_, t) => {
     const leftHas = t < left.length;
@@ -69,7 +69,7 @@ function merge(left, right, bothFn, leftFn, rightFn) {
 
 // Behaviors
 
-function mapB(behavior, f) {
+function mapB(f, behavior) {
   return behavior.map(f);
 }
 
@@ -87,7 +87,7 @@ function apply(f, behaviorA, behaviorB) {
 }
 
 
-function mapTag(eventStream, behavior, f) {
+function mapTag(f, eventStream, behavior) {
   const n = Math.max(eventStream.length, behavior.length);
   return Array.from({ length: n }, (_, t) => {
     const e = eventStream[t];
@@ -97,7 +97,7 @@ function mapTag(eventStream, behavior, f) {
 }
 
 function tag(eventStream, behavior) {
-  return mapTag(eventStream, behavior, (_e, b) => b);
+  return mapTag((_e, b) => b, eventStream, behavior);
 }
 
 // Moments

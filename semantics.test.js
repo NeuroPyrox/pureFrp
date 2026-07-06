@@ -4,7 +4,7 @@ import { nothing, mapE, filter, merge, mapB, apply, stepper } from "./semantics.
 // mapE test
 (function test_mapE() {
   const inEvents = [nothing, 'a', nothing, 'b'];
-  const out = mapE(inEvents, s => s.toUpperCase());
+  const out = mapE(s => s.toUpperCase(), inEvents);
   const expected = [nothing, 'A', nothing, 'B'];
   assert.deepStrictEqual(out, expected, 'mapE uppercases event values');
 })();
@@ -12,7 +12,7 @@ import { nothing, mapE, filter, merge, mapB, apply, stepper } from "./semantics.
 // filter test
 (function test_filter() {
   const inEvents = ['ok', '', nothing, 'x'];
-  const out = filter(inEvents, s => s.length > 0);
+  const out = filter(s => s.length > 0, inEvents);
   const expected = ['ok', nothing, nothing, 'x'];
   assert.deepStrictEqual(out, expected, 'filter filters falsy strings');
 })();
@@ -24,7 +24,7 @@ import { nothing, mapE, filter, merge, mapB, apply, stepper } from "./semantics.
   const both = (x, y) => `both:${x}:${y}`;
   const left = x => `L:${x}`;
   const right = y => `R:${y}`;
-  const out = merge(a, b, both, left, right);
+  const out = merge(both, left, right, a, b);
   const expected = ['R:10', 'L:1', 'R:20', 'both:3:30'];
   assert.deepStrictEqual(out, expected, 'merge combines streams with handlers');
 })();
@@ -36,7 +36,7 @@ import { nothing, mapE, filter, merge, mapB, apply, stepper } from "./semantics.
   const both = (x, y) => `both:${x}:${y}`;
   const left = x => `L:${x}`;
   const right = y => `R:${y}`;
-  const out = merge(a, b, both, left, right);
+  const out = merge(both, left, right, a, b);
   // Expected: ticks 0-1 have both values, ticks 2-3 have only b values
   const expected = ['both:1:10', 'both:2:20', 'R:30', 'R:40'];
   assert.deepStrictEqual(out, expected, 'merge handles left shorter than right');
@@ -49,7 +49,7 @@ import { nothing, mapE, filter, merge, mapB, apply, stepper } from "./semantics.
   const both = (x, y) => `both:${x}:${y}`;
   const left = x => `L:${x}`;
   const right = y => `R:${y}`;
-  const out = merge(a, b, both, left, right);
+  const out = merge(both, left, right, a, b);
   // Expected: ticks 0-1 have both values, ticks 2-3 have only a values
   const expected = ['both:1:10', 'both:2:20', 'L:3', 'L:4'];
   assert.deepStrictEqual(out, expected, 'merge handles right shorter than left');
@@ -62,7 +62,7 @@ import { nothing, mapE, filter, merge, mapB, apply, stepper } from "./semantics.
   const both = (x, y) => `both:${x}:${y}`;
   const left = x => `L:${x}`;
   const right = y => `R:${y}`;
-  const out = merge(a, b, both, left, right);
+  const out = merge(both, left, right, a, b);
   // Expected: undefined is treated as a normal value, not nothing
   // Tick 0: a=1, b=10 -> both
   // Tick 1: a=undefined, b=20 -> both (undefined is a value)
@@ -82,7 +82,7 @@ import { nothing, mapE, filter, merge, mapB, apply, stepper } from "./semantics.
 // mapB test
 (function test_mapB() {
   const b2 = [1, 2, 3];
-  const mapped = mapB(b2, x => x * 2);
+  const mapped = mapB(x => x * 2, b2);
   assert.deepStrictEqual(mapped, [2, 4, 6], 'mapB mapped numeric behavior');
 })();
 
