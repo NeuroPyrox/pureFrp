@@ -87,8 +87,8 @@ function apply(f, behaviorA, behaviorB) {
 function mapTag(f, eventStream, behavior) {
   const n = Math.max(eventStream.length, behavior.length);
   return Array.from({ length: n }, (_, t) => {
-    const e = eventStream[t];
-    const b = behavior[t];
+    const e = t < eventStream.length ? eventStream[t] : nothing;
+    const b = t < behavior.length ? behavior[t] : behavior[behavior.length - 1];
     return e !== nothing ? f(e, b) : nothing;
   });
 }
