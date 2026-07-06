@@ -79,15 +79,20 @@ import { nothing, mapE, filter, merge, mapB, apply, stepper } from "./semantics.
   assert.deepStrictEqual(b, expected, 'stepper holds last event value');
 })();
 
-// mapB + apply test
-(function test_behaviors() {
-  const b1 = ['a', 'b', 'c'];
+// mapB test
+(function test_mapB() {
   const b2 = [1, 2, 3];
   const mapped = mapB(b2, x => x * 2);
   assert.deepStrictEqual(mapped, [2, 4, 6], 'mapB mapped numeric behavior');
-  const bf = [x => x + 1, x => x + 2, x => x + 3];
-  const applied = apply(bf, b2);
-  assert.deepStrictEqual(applied, [2, 4, 6], 'apply applies function behavior');
+})();
+
+// apply test
+(function test_apply() {
+  const bA = [1, 2, 3];
+  const bB = [10, 20, 30];
+  const f = (a, b) => a + b;
+  const applied = apply(f, bA, bB);
+  assert.deepStrictEqual(applied, [11, 22, 33], 'apply combines two behaviors with a curried function');
 })();
 
 console.log('All semantic tests passed');

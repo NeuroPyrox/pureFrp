@@ -73,17 +73,15 @@ function mapB(behavior, f) {
   return behavior.map(f);
 }
 
-// apply: behaviorF (values functions) applied to behaviorA values -> behaviorC
-// TODO write tests to expose the issues here
-// TODO use type signature defined in index.html
-// TODO rewrite in a more functional style
-function apply(behaviorF, behaviorA) {
-  const n = Math.max(behaviorF.length, behaviorA.length);
+// TODO user Array.from
+// apply: (a -> b -> c) -> Behavior a -> Behavior b -> Behavior c
+function apply(f, behaviorA, behaviorB) {
+  const n = Math.max(behaviorA.length, behaviorB.length);
   const out = new Array(n);
   for (let i = 0; i < n; i++) {
-    const f = i < behaviorF.length ? behaviorF[i] : behaviorF[behaviorF.length - 1];
     const a = i < behaviorA.length ? behaviorA[i] : behaviorA[behaviorA.length - 1];
-    out[i] = f(a);
+    const b = i < behaviorB.length ? behaviorB[i] : behaviorB[behaviorB.length - 1];
+    out[i] = f(a, b);
   }
   return out;
 }
