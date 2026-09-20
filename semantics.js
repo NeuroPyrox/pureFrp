@@ -94,17 +94,17 @@ function observeE(eventOfMomentFns) {
 
 function switchE(eventOfEvents) {
   return function switchEAt(momentTime) {
-    return t => {
-      if (t < momentTime) return nothing;
-      let current = null;
-      for (let s = momentTime; s <= t; s++) {
-        const e = eventOfEvents(s);
-        if (e !== nothing) {
-          current = e;
-        }
-      }
-      return current === null ? nothing : current(t);
+    // The currently selected event is a behavior: at each time, it either
+    // keeps the previous event or replaces it with the newly emitted one.
+    const current = t => {
+      if (t <= momentTime) return never;
+
+      const selected = eventOfEvents(t - 1);
+      if (selected !== nothing) return selected;
+      return current(t - 1);
     };
+
+    return t => current(t)(t);
   };
 }
 
