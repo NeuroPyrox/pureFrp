@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { nothing, mapE, filter, merge, mapB, apply, mapTag, tag, stepper } from "./semantics.js";
+import { nothing, mapE, filter, merge, mapB, apply, mapTag, tag, switchE, stepper } from "./semantics.js";
 
 // mapE test
 (function test_mapE() {
@@ -238,6 +238,42 @@ import { nothing, mapE, filter, merge, mapB, apply, mapTag, tag, stepper } from 
   const results = [b(0), b(1), b(2), b(3), b(4)];
   const expected = ['init', 'x', 'x', 'y', 'y'];
   assert.deepStrictEqual(results, expected, 'stepper holds last event value');
+})();
+
+// switchE test
+(function test_switchE() {
+  const first = t => (t === 1 ? 'first' : nothing);
+  const second = t => (t === 3 ? 'second' : nothing);
+  const eventOfEvents = t => {
+    if (t === 0) return first;
+    if (t === 2) return second;
+    return nothing;
+  };
+
+  const switched = switchE(eventOfEvents)(0);
+  const results = [switched(-1), switched(0), switched(1), switched(2), switched(3), switched(4)];
+  const expected = [nothing, nothing, 'first', nothing, 'second', nothing];
+  assert.deepStrictEqual(results, expected, 'switchE follows the most recently emitted event');
+})();
+
+// switchE delays child activation by one tick
+(function test_switchE_delayed_activation() {
+  const emitsOnSelection = t => (t === 0 ? 'immediate' : nothing);
+  const emitsAfterActivation = t => (t === 3 ? 'delayed' : nothing);
+  const eventOfEvents = t => {
+    if (t === 0) return emitsOnSelection;
+    if (t === 2) return emitsAfterActivation;
+    return nothing;
+  };
+
+  const switched = switchE(eventOfEvents)(0);
+  const results = [switched(0), switched(1), switched(2), switched(3)];
+  const expected = [nothing, nothing, nothing, 'delayed'];
+  assert.deepStrictEqual(
+    results,
+    expected,
+    'switchE does not deliver a child event on the tick it is selected'
+  );
 })();
 
 console.log('All semantic tests passed');
