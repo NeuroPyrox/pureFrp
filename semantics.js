@@ -112,16 +112,14 @@ function switchE(eventOfEvents) {
 // Returns a function that, given a momentTime, yields the behavior function.
 function stepper(init, event) {
   return function stepperAt(momentTime) {
-    return t => {
-      let current = init;
-      for (let s = momentTime; s <= t; s++) {
-        const v = event(s);
-        if (v !== nothing) {
-          current = v;
-        }
-      }
-      return current;
+    const current = t => {
+      if (t <= momentTime) return init;
+
+      const value = event(t - 1);
+      return value !== nothing ? value : current(t - 1);
     };
+
+    return current;
   };
 }
 
