@@ -9,7 +9,7 @@ import { nothing, mapE, filter, merge, mapB, apply, mapTag, tag, observeE, switc
     if (t === 3) return 'b';
     return nothing;
   };
-  
+
   const out = mapE(s => s.toUpperCase(), inEvents);
   
   // Check specific ticks
@@ -260,20 +260,6 @@ import { nothing, mapE, filter, merge, mapB, apply, mapTag, tag, observeE, switc
   assert.strictEqual(invoked, true);
 })();
 
-// stepper test
-(function test_stepper() {
-  const ev = t => {
-    if (t === 1) return 'x';
-    if (t === 3) return 'y';
-    return nothing;
-  };
-  
-  const b = stepper('init', ev)(0);
-  const results = [b(0), b(1), b(2), b(3), b(4)];
-  const expected = ['init', 'x', 'x', 'y', 'y'];
-  assert.deepStrictEqual(results, expected, 'stepper holds last event value');
-})();
-
 // switchE test
 (function test_switchE() {
   const first = t => (t === 1 ? 'first' : nothing);
@@ -308,6 +294,20 @@ import { nothing, mapE, filter, merge, mapB, apply, mapTag, tag, observeE, switc
     expected,
     'switchE does not deliver a child event on the tick it is selected'
   );
+})();
+
+// stepper test
+(function test_stepper() {
+  const ev = t => {
+    if (t === 1) return 'x';
+    if (t === 3) return 'y';
+    return nothing;
+  };
+
+  const b = stepper('init', ev)(0);
+  const results = [b(0), b(1), b(2), b(3), b(4)];
+  const expected = ['init', 'x', 'x', 'y', 'y'];
+  assert.deepStrictEqual(results, expected, 'stepper holds last event value');
 })();
 
 console.log('All semantic tests passed');
