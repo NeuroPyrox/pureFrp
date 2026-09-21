@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { nothing, mapE, filter, merge, mapB, apply, mapTag, tag, observeE, switchE, stepper } from "./semantics.js";
+import { nothing, mapE, filter, merge, mapB, apply, mapTag, tag, observeE, switchE, stepper, loopEvent, loopBehavior } from "./semantics.js";
 
 // mapE test
 (function test_mapE() {
@@ -318,6 +318,28 @@ import { nothing, mapE, filter, merge, mapB, apply, mapTag, tag, observeE, switc
   assert.strictEqual(b(1), 'init');
   assert.strictEqual(b(2), 'init');
   assert.strictEqual(b(3), 'at-moment');
+})();
+
+// loopEvent feeds the returned event back into the builder
+(function test_loopEvent() {
+  const b = loopEvent(input => momentTime => [
+    t => input(t),
+    t => (t === 2 ? 'event-output' : nothing),
+  ])(0);
+
+  assert.strictEqual(b(1), nothing);
+  assert.strictEqual(b(2), 'event-output');
+})();
+
+// loopBehavior feeds the returned behavior back into the builder
+(function test_loopBehavior() {
+  const b = loopBehavior(input => momentTime => [
+    t => input(t) + 1,
+    t => t * 2,
+  ])(0);
+
+  assert.strictEqual(b(0), 1);
+  assert.strictEqual(b(3), 7);
 })();
 
 console.log('All semantic tests passed');
