@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { nothing, mapE, filter, merge, mapB, apply, mapTag, tag, switchE, stepper } from "./semantics.js";
+import { nothing, mapE, filter, merge, mapB, apply, mapTag, tag, observeE, switchE, stepper } from "./semantics.js";
 
 // mapE test
 (function test_mapE() {
@@ -224,6 +224,40 @@ import { nothing, mapE, filter, merge, mapB, apply, mapTag, tag, switchE, steppe
   const results = [out(0), out(1), out(2)];
   const expected = ['A', nothing, nothing];
   assert.deepStrictEqual(results, expected, 'tag treats ticks past event length as nothing');
+})();
+
+// observeE test
+(function test_observeE() {
+  const eventOfMomentFns = t => {
+    if (t === 1) return momentTime => `created:${momentTime},observed:${t}`;
+    if (t === 3) return momentTime => `created:${momentTime},observed:${t}`;
+    return nothing;
+  };
+
+  const observed = observeE(eventOfMomentFns);
+  const results = [observed(0), observed(1), observed(2), observed(3)];
+  const expected = [nothing, 'created:1,observed:1', nothing, 'created:3,observed:3'];
+  assert.deepStrictEqual(results, expected, 'observeE observes moments at the current tick');
+})();
+
+// observeE does not invoke a moment when its event does not fire
+(function test_observeE_no_event() {
+  let invoked = false;
+  const eventOfMomentFns = t => {
+    if (t === 1) {
+      return () => {
+        invoked = true;
+        return 'unexpected';
+      };
+    }
+    return nothing;
+  };
+
+  const observed = observeE(eventOfMomentFns);
+  assert.strictEqual(observed(0), nothing);
+  assert.strictEqual(invoked, false);
+  assert.strictEqual(observed(1), 'unexpected');
+  assert.strictEqual(invoked, true);
 })();
 
 // stepper test
