@@ -306,8 +306,18 @@ import { nothing, mapE, filter, merge, mapB, apply, mapTag, tag, observeE, switc
 
   const b = stepper('init', ev)(0);
   const results = [b(0), b(1), b(2), b(3), b(4)];
-  const expected = ['init', 'x', 'x', 'y', 'y'];
-  assert.deepStrictEqual(results, expected, 'stepper holds last event value');
+  const expected = ['init', 'init', 'x', 'x', 'y'];
+  assert.deepStrictEqual(results, expected, 'stepper delays event values by one tick');
+})();
+
+// stepper delays an event at its moment time
+(function test_stepper_delayed_event_at_moment() {
+  const ev = t => (t === 2 ? 'at-moment' : nothing);
+
+  const b = stepper('init', ev)(2);
+  assert.strictEqual(b(1), 'init');
+  assert.strictEqual(b(2), 'init');
+  assert.strictEqual(b(3), 'at-moment');
 })();
 
 console.log('All semantic tests passed');
