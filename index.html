@@ -25,26 +25,6 @@
     // loopEvent : Moment (Event a)
     // loopBehavior : Moment (Behavior a)
 
-    // Re-implementation plan for chronomancy.js and html.js:
-    // Goal: produce a clear, correct, and readable reference implementation first,
-    // then optimize for performance only where measurements show a need.
-    //
-    // Steps:
-    // 1) Inventory the public APIs used by frpExample (chronomancy.js exports and
-    //    html.js helpers). Write a concise spec of each function's contract.
-    // 2) Implement core FRP primitives (unoptimized, reference-quality):
-    //    - Event and Behavior constructors, input, never
-    //    - mapE, filter, merge, mapB, apply, tag, mapTag
-    //    - stepper, loopEvent, loopBehavior, switchE, mergeBind
-    //    - observeE and output (Moment scheduling / transactional semantics)
-    // 3) Add a simple scheduler / Moment implementation ensuring deterministic
-    //    update order and no extra allocations (clarify ordering rules in comments).
-    // 4) Implement html.js on top of those primitives: DOM element wrappers,
-    //    inputs/buttons/pull/table helpers, and utility combinators used by examples.
-    // 5) Port the frpExample interactive examples and run them as tests.
-    // 6) Write microbenchmarks for hot paths (table updates, many listeners).
-    // 7) Iterate: fix correctness issues found by examples/tests, then optimize.
-    //
     // Optimization note (many children/parents):
     // - Do not prematurely optimize. Complete a correct unoptimized version first.
     // - If benchmarks show pain points when sinks/sources have large fan-in/fan-out,
@@ -90,13 +70,13 @@
     //    - Use tag to capture the behavior value at event time; mapTag to combine.
     //    - Placeholder: function* viewTagging() {}
     //
-    // 5) Higher-order events: switchE, mergeBind, observeE
+    // 5) Higher-order events: switchE, observeE
     //    - UI: controls to spawn child event streams (e.g., per-session events).
-    //    - Demonstrate switchE to follow most recent child Event, mergeBind to flatten
-    //      with custom mapping, and observeE for executing Moment-producing events.
+    //    - Demonstrate switchE to follow the most recent child Event and observeE
+    //      for executing Moment-producing events.
     //    - Placeholder: function* viewHigherOrder() {}
     //
-    // 6) Looping and state: loopEvent, loopBehavior, mergeBind usage for state machines
+    // 6) Looping and state: loopEvent and loopBehavior for state machines
     //    - UI: a small state machine (traffic-light or counter with reset) implemented
     //      using loopBehavior/loopEvent and stepper to keep internal state.
     //    - Show how to expose events for external control and observe state changes.
@@ -113,6 +93,8 @@
     //      that links many combinators together. Placeholder: function* viewApp() {}
     //
     // Placeholder function declarations to match frpExample style.
+
+    import * as html from "./library/html.js";
 
     function* viewBasics() {
       yield html.text(
@@ -150,7 +132,7 @@
     }
 
     function* viewHigherOrder() {
-      // TODO: spawn child streams and show switchE / mergeBind
+      // TODO: spawn child streams and show switchE
     }
 
     function* viewLoops() {
