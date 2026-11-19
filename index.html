@@ -7,8 +7,6 @@
 </head>
 <body>
   <script type="module">
-    import * as html from "./frpExample/html.js";
-
     // List of reactives:
     // input : ((a -> IO ()) -> IO ()) -> Event a
     // never : Event ()
@@ -74,91 +72,99 @@
     //    - UI: a text input and two buttons (emit, clear). Live list of emitted values.
     //    - Show mapE (transform input), filter (drop empty or short strings), never used
     //      to demonstrate absence. Expected outcome: how events map & filter.
-    //    - Placeholder: function* view_basics() { /* use input, mapE, filter */ }
+    //    - Placeholder: function* viewBasics() { /* use input, mapE, filter */ }
     //
     // 2) Merging & conflict resolution: merge
     //    - UI: two independent counters (buttons) producing Event<number>.
     //    - Merge the two counters into one Event with custom resolver to tag source.
-    //    - Show timeline / recent events. Placeholder: function* view_merge() {}
+    //    - Show timeline / recent events. Placeholder: function* viewMerge() {}
     //
     // 3) Behaviors and applying: mapB, apply, stepper
     //    - UI: a slider (Behavior<number>) and a text field showing mapped value.
     //    - Demonstrate stepper to convert an Event into a Behavior, then mapB/apply
     //      to combine behaviors (e.g., multiply slider * stepper value).
-    //    - Placeholder: function* view_behaviors() {}
+    //    - Placeholder: function* viewBehaviors() {}
     //
     // 4) Tagging and mapTag: tag, mapTag
     //    - UI: event of clicks + a live behavior (e.g., current timestamp or counter).
     //    - Use tag to capture the behavior value at event time; mapTag to combine.
-    //    - Placeholder: function* view_tagging() {}
+    //    - Placeholder: function* viewTagging() {}
     //
     // 5) Higher-order events: switchE, mergeBind, observeE
     //    - UI: controls to spawn child event streams (e.g., per-session events).
     //    - Demonstrate switchE to follow most recent child Event, mergeBind to flatten
     //      with custom mapping, and observeE for executing Moment-producing events.
-    //    - Placeholder: function* view_higher_order() {}
+    //    - Placeholder: function* viewHigherOrder() {}
     //
     // 6) Looping and state: loopEvent, loopBehavior, mergeBind usage for state machines
     //    - UI: a small state machine (traffic-light or counter with reset) implemented
     //      using loopBehavior/loopEvent and stepper to keep internal state.
     //    - Show how to expose events for external control and observe state changes.
-    //    - Placeholder: function* view_loops() {}
+    //    - Placeholder: function* viewLoops() {}
     //
     // 7) IO and outputs: output, observeE, and integration with DOM
     //    - UI: demonstrate output to console or a log area when events fire.
     //    - Show observeE converting Event(Moment a) to Event a and then output.
-    //    - Placeholder: function* view_io() {}
+    //    - Placeholder: function* viewIo() {}
     //
     // 8) Composite examples: combining combinators in a small app
     //    - Recreate a simplified version of the frpExample user-table: inputs,
     //      signups, table behavior, merges and tagging. This is a "capstone" view
-    //      that links many combinators together. Placeholder: function* view_app() {}
+    //      that links many combinators together. Placeholder: function* viewApp() {}
     //
     // Placeholder function declarations to match frpExample style.
-    function* view_basics() {
+
+    function* viewBasics() {
       yield html.text(
         "Enter a string and click Emit. Strings shorter than 3 characters are filtered out."
       );
-      const textInput = yield* html.textInput();
-      const emitButton = yield* html.button("Emit");
+      const textInput = yield html.textInput();
+      const emitButton = yield html.button("Emit");
       const emittedStrings = emitButton
         .onClick()
         .tag(textInput.inputValues());
 
       yield html.text("Last emitted string:");
-      yield* html.p({
+      yield html.p({
         setTextContent: emittedStrings.map((value) => JSON.stringify(value)),
       });
 
       yield html.text("Last string that passed the filter:");
-      yield* html.p({
+      yield html.p({
         setTextContent: emittedStrings
           .filter((value) => value.length >= 3)
           .map((value) => JSON.stringify(value)),
       });
     }
-    function* view_merge() {
+
+    function* viewMerge() {
       // TODO: two counters, merge with resolver
     }
-    function* view_behaviors() {
+
+    function* viewBehaviors() {
       // TODO: slider behavior, stepper from event, mapB/apply
     }
-    function* view_tagging() {
+
+    function* viewTagging() {
       // TODO: demonstrate tag and mapTag
     }
-    function* view_higher_order() {
+
+    function* viewHigherOrder() {
       // TODO: spawn child streams and show switchE / mergeBind
     }
-    function* view_loops() {
+
+    function* viewLoops() {
       // TODO: implement stateful example using loopBehavior/loopEvent
     }
-    function* view_io() {
+
+    function* viewIo() {
       // TODO: demonstrate output and observeE
     }
-    function* view_app() {
+
+    function* viewApp() {
       // TODO: composite example combining many combinators
     }
 
-    html.startHtml(document.body, view_basics);
+    html.start(document.body, viewBasics);
   </script>
 </body>
