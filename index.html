@@ -112,27 +112,6 @@
     //      signups, table behavior, merges and tagging. This is a "capstone" view
     //      that links many combinators together. Placeholder: function* view_app() {}
     //
-    // Implementation notes and conventions (for contributor reference):
-    // - Each view is a generator function* that yields html controls (see html.js API).
-    // - Views should expose a simple start function: startView(container, viewGenerator)
-    //   that mounts the view into a DOM element similarly to html.startHtml.
-    // - For each combinator demonstration include:
-    //     * Short prose comment describing the goal and the reactive wiring.
-    //     * Minimal wiring code showing the combinators in use (mapE, merge, stepper,
-    //       switchE, mapTag, tag, loopEvent, loopBehavior, observeE, output).
-    // - Add a top-level index page that lists all views with buttons to open them
-    //   (each button should switch the main container innerHtml to the chosen view).
-    //
-    // Suggested file organization (optional):
-    // - Keep examples in this index.html for simplicity, following frpExample style.
-    // - Alternatively move detailed examples into examples/*.html or examples/*.js
-    //   if the file grows large.
-    //
-    // Next steps for implementation:
-    // - Implement view skeletons in this file matching the placeholder names above.
-    // - Wire a navigation list that switches between views using loopEvent/switchE.
-    // - Implement 1-2 full views (Basics and Behaviors) first as runnable examples.
-    //
     // Placeholder function declarations to match frpExample style.
     function* view_basics() {
       // TODO: use input, mapE, filter to show basic event flow

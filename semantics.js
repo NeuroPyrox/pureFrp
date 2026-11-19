@@ -22,13 +22,8 @@ const nothing = Symbol('nothing');
 // observeE : Event (Moment a) -> Event a
 // switchE : Event (Event a) -> Moment (Event a)
 // stepper : a -> Event a -> Moment (Behavior a)
-//
-// Not implemented yet TODO
 // loopEvent : (Event a -> Moment(b, Event a)) -> Moment b
 // loopBehavior : (Behavior a -> Moment(b, Behavior a)) -> Moment b
-
-// input : ((a -> IO ()) -> IO ()) -> Event a
-// output : Event a -> (a -> IO ()) -> Moment ()
 
 // Events
 
@@ -129,7 +124,7 @@ function stepper(init, event) {
 }
 
 // loopEvent: ties the returned event back into the event supplied to the
-// builder. The feedback event must be sampled after the moment is built.
+// builder. The feedback event must only be sampled after the moment is built.
 function loopEvent(build) {
   return function loopEventAt(momentTime) {
     let output;
@@ -141,7 +136,7 @@ function loopEvent(build) {
 }
 
 // loopBehavior: ties the returned behavior back into the behavior supplied to
-// the builder. The feedback behavior must be sampled after the moment is built.
+// the builder. The feedback behavior must only be sampled after the moment is built.
 function loopBehavior(build) {
   return function loopBehaviorAt(momentTime) {
     let output;
