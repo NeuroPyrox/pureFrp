@@ -6,7 +6,9 @@
   <title>Pure FRP</title>
 </head>
 <body>
-  <script>
+  <script type="module">
+    import * as html from "./frpExample/html.js";
+
     // List of reactives:
     // input : ((a -> IO ()) -> IO ()) -> Event a
     // never : Event ()
@@ -114,7 +116,26 @@
     //
     // Placeholder function declarations to match frpExample style.
     function* view_basics() {
-      // TODO: use input, mapE, filter to show basic event flow
+      yield html.text(
+        "Enter a string and click Emit. Strings shorter than 3 characters are filtered out."
+      );
+      const textInput = yield* html.textInput();
+      const emitButton = yield* html.button("Emit");
+      const emittedStrings = emitButton
+        .onClick()
+        .tag(textInput.inputValues());
+
+      yield html.text("Last emitted string:");
+      yield* html.p({
+        setTextContent: emittedStrings.map((value) => JSON.stringify(value)),
+      });
+
+      yield html.text("Last string that passed the filter:");
+      yield* html.p({
+        setTextContent: emittedStrings
+          .filter((value) => value.length >= 3)
+          .map((value) => JSON.stringify(value)),
+      });
     }
     function* view_merge() {
       // TODO: two counters, merge with resolver
@@ -137,5 +158,7 @@
     function* view_app() {
       // TODO: composite example combining many combinators
     }
+
+    html.startHtml(document.body, view_basics);
   </script>
 </body>
