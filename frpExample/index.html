@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Login v4</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#164113" />
+    <meta name="msapplication-TileColor" content="#006600" />
+    <meta name="theme-color" content="#006600" />
+  </head>
+  <body></body>
+  <script type="module">
+    import {
+      never,
+      input,
+      loopEvent,
+      loopBehavior,
+    } from "./chronomancy.js";
+    import * as html from "./html.js";
+
+    function* userDatabase({
+      signupAttempts,
+      insertions,
+      usernamesToRemove,
+      clears,
+    }) {
+      const internalTableB = yield* loopBehavior();
+
+      // [start] is the lowest output and [end] is the highest output.
+      // It's important to note that [end] is in the range of outputs.
+      // Either returns the found index or if none is found, the insertion index.
+      const protoFindUsername = (table, start, end, username) => {
+        if (start === end) {
+          return start;
+        }
+        const middle = Math.floor((start + end) / 2);
+        if (table[middle].username < username) {
+          return protoFindUsername(table, middle + 1, end, username);
+        } else {
+          return protoFindUsername(table, start, middle, username);
+        }
+      };
+      const findUsername = (table, username) =>
+        protoFindUsername(table, 0, table.length, username);
+
+      const signups = signupAttempts
+        .mapTag(internalTableB, ({ username, password }, table) => {
+          const index = findUsername(table, username);
+          const foundUser = table[index];
+          if (foundUser === undefined || foundUser.username !== username) {
+            return { index, username, password };
+          }
+          return null;
+        })
+        .filter((x) => x !== null);
+      let tableTransform = signups.map(
+        ({ index, username, password }) =>
+          (table) =>
+            table.splice(index, 0, { username, password })
+      );
+
+      insertions = insertions.mapTag(
+        internalTableB,
+        ({ username, password }, table) => {
+          const index = findUsername(table, username);
+          const foundUser = table[index];
+          if (foundUser === undefined || foundUser.username !== username) {
+            return { type: "createUser", index, username, password };
+          }
+          if (foundUser.password !== password) {
+            return { type: "changePassword", index, username, password };
+          }
+          return {};
+        }
+      );
+
+      const createUserInsertions = insertions
+        .filter(({ type }) => type === "createUser")
+        .map(({ type, ...rest }) => rest);
+      tableTransform = tableTransform.merge(
+        createUserInsertions.map(
+          ({ index, username, password }) =>
+            (table) =>
+              table.splice(index, 0, { username, password })
+        )
+      );
+      const createdUsers = createUserInsertions.merge(signups);
+
+      const passwordChanges = insertions
+        .filter(({ type }) => type === "changePassword")
+        .map(({ type, ...rest }) => rest);
+      tableTransform = tableTransform.merge(
+        passwordChanges.map(
+          ({ index, password }) =>
+            (table) =>
+              (table[index].password = password)
+        )
+      );
+
+      const removedUsers = usernamesToRemove.mapTag(
+        internalTableB,
+        (username, table) => ({
+          index: findUsername(table, username),
+          username,
+        })
+      );
+      tableTransform = tableTransform.merge(
+        removedUsers.map(
+          ({ index }) =>
+            (table) =>
+              table.splice(index, 1)
+        )
+      );
+
+      const tableLengthOnClear = clears
+        .tag(internalTableB)
+        .map(({ length }) => length);
+      clears = tableLengthOnClear.filter((length) => length !== 0);
+      tableTransform = tableTransform.merge(
+        clears.map(() => (table) => (table.length = 0))
+      );
+
+      // The copy prevents side-effects if we want to access internalTableB arbitrarily.
+      const newInternalTables = tableTransform.mapTag(
+        internalTableB,
+        (transform, table) => {
+          const copy = [...table];
+          transform(copy);
+          return copy;
+        }
+      );
+      internalTableB.loop(yield* newInternalTables.stepper([]));
+
+      const tryLogins = (event) =>
+        event.mapTag(internalTableB, ({ username, password }, table) => {
+          const foundUser = table[findUsername(table, username)];
+          return (
+            foundUser !== undefined &&
+            foundUser.username === username &&
+            foundUser.password === password
+          );
+        });
+      return {
+        createdUsers,
+        passwordChanges,
+        removedUsers,
+        clears,
+        tryLogins,
+        signups,
+      };
+    }
+
+    function* userTable(signupAttempts) {
+      let usernameInsertInput,
+        passwordInsertInput,
+        insertButton,
+        usernamesToRemove;
+
+      const [insertions, model] = yield html.pull(function* () {
+        return [
+          yield* loopEvent(),
+          {
+            createdUsers: yield* loopEvent(),
+            passwordChanges: yield* loopEvent(),
+            removedUsers: yield* loopEvent(),
+            clears: yield* loopEvent(),
+          },
+        ];
+      });
+
+      const clearButton = yield* html.button("Clear");
+      yield* html.table(function* () {
+        yield* html.thead(function* () {
+          yield* html.tr(function* () {
+            yield* html.th("Username");
+            yield* html.th("Password");
+          });
+          yield* html.tr(function* () {
+            yield* html.td(function* () {
+              usernameInsertInput = yield* html.textInput({
+                setValue: insertions.map(() => ""),
+              });
+            });
+            yield* html.td(function* () {
+              passwordInsertInput = yield* html.textInput({
+                setValue: insertions.map(() => ""),
+              });
+            });
+            yield* html.td(function* () {
+              insertButton = yield* html.button("Insert");
+            });
+          });
+        });
+        const tbody = yield* html.tbody({
+          insertChildren: model.createdUsers.map(
+            ({ index, username, password }) => [
+              index,
+              function* () {
+                let xButton;
+                yield* html.tr(function* () {
+                  yield* html.td(username);
+                  yield* html.td(
+                    {
+                      setTextContent: model.passwordChanges
+                        .filter(({ username: u }) => u === username)
+                        .map(({ password }) => password),
+                    },
+                    password
+                  );
+                  yield* html.td(function* () {
+                    xButton = yield* html.button("X");
+                  });
+                });
+                return xButton.onClick().map(() => username);
+              },
+            ]
+          ),
+          removeChild: model.removedUsers.map(({ index }) => index),
+          setInnerHtml: model.clears.map(() => function* () {}),
+        });
+        usernamesToRemove = yield html.pull(() =>
+          tbody
+            .afterInsertChildren()
+            .mergeBind((usernameUponX) => usernameUponX)
+        );
+      });
+
+      insertions.loop(
+        insertButton
+          .onClick()
+          .tag(usernameInsertInput.inputValues())
+          .mapTag(passwordInsertInput.inputValues(), (username, password) => ({
+            username,
+            password,
+          }))
+          .filter(
+            ({ username, password }) => username !== "" && password !== ""
+          )
+      );
+
+      const [tryLogins, signups] = yield html.pull(function* () {
+        const {
+          createdUsers,
+          passwordChanges,
+          removedUsers,
+          clears,
+          tryLogins,
+          signups,
+        } = yield* userDatabase({
+          signupAttempts,
+          insertions,
+          usernamesToRemove,
+          clears: clearButton.onClick(),
+        });
+        model.createdUsers.loop(createdUsers);
+        model.passwordChanges.loop(passwordChanges);
+        model.removedUsers.loop(removedUsers);
+        model.clears.loop(clears);
+        return [tryLogins, signups];
+      });
+
+      return {
+        usernamesToLogout: model.passwordChanges
+          .merge(model.removedUsers)
+          .map(({ username }) => username),
+        clears: model.clears,
+        tryLogins,
+        signups,
+      };
+    }
+
+    function* main() {
+      const signupAttempts = yield html.pull(loopEvent);
+
+      const { usernamesToLogout, clears, tryLogins, signups } =
+        yield* userTable(signupAttempts);
+
+      function* loginHtml() {
+        const loginAttempts = yield html.pull(loopEvent);
+        const loginSuccesses = tryLogins(
+          loginAttempts.filter(
+            ({ username, password }) => username !== "" && password !== ""
+          )
+        );
+
+        yield html.text("Username:");
+        const usernameInput = yield* html.textInput();
+        yield html.text("Password:");
+        const passwordInput = yield* html.textInput();
+        const loginButton = yield* html.button("Login");
+        const statusText = yield* html.p({
+          setTextContent: loginSuccesses
+            .filter((success) => !success)
+            .map(() => "Invalid login!")
+            .merge(
+              loginAttempts
+                .filter(({ username }) => username === "")
+                .map(() => "Username required!")
+            )
+            .merge(
+              loginAttempts
+                .filter(
+                  ({ username, password }) => username !== "" && password === ""
+                )
+                .map(() => "Password required!")
+            ),
+        });
+        yield html.text("Don't have an account yet?");
+        const signupButton = yield* html.button("Signup");
+
+        loginAttempts.loop(
+          loginButton
+            .onClick()
+            .tag(usernameInput.inputValues())
+            .mapTag(passwordInput.inputValues(), (username, password) => ({
+              username,
+              password,
+            }))
+        );
+
+        return [
+          signupButton
+            .onClick()
+            .map(() => signupHtml)
+            .merge(
+              loginSuccesses
+                .filter((success) => success)
+                .tag(usernameInput.inputValues())
+                .map((username) => () => loggedInHtml(username))
+            ),
+          never,
+        ];
+      }
+
+      function* signupHtml() {
+        yield html.text("Username:");
+        const usernameInput = yield* html.textInput();
+        yield html.text("Password:");
+        const passwordInput = yield* html.textInput();
+        const signupButton = yield* html.button("Signup");
+
+        const signupAttempts = signupButton
+          .onClick()
+          .tag(usernameInput.inputValues())
+          .mapTag(passwordInput.inputValues(), (username, password) => ({
+            username,
+            password,
+          }));
+        const nonEmptySignupAttempts = signupAttempts.filter(
+          ({ username, password }) => username !== "" && password !== ""
+        );
+        const signupFailures = nonEmptySignupAttempts
+          .merge(
+            signups,
+            (a, b) => false,
+            (a) => true
+          )
+          .filter((x) => x === true);
+
+        const statusText = yield* html.p({
+          setTextContent: signupFailures
+            .map(() => "Username already exists!")
+            .merge(
+              signupAttempts
+                .filter(({ username }) => username === "")
+                .map(() => "Username required!")
+            )
+            .merge(
+              signupAttempts
+                .filter(
+                  ({ username, password }) => username !== "" && password === ""
+                )
+                .map(() => "Password required!")
+            ),
+        });
+        yield html.text("Already have an account?");
+        const loginButton = yield* html.button("Login");
+
+        return [
+          loginButton
+            .onClick()
+            .map(() => loginHtml)
+            .merge(
+              signups.map(
+                ({ username }) =>
+                  () =>
+                    loggedInHtml(username)
+              )
+            ),
+          nonEmptySignupAttempts,
+        ];
+      }
+
+      function* loggedInHtml(username) {
+        yield html.text(`Hello ${username}`);
+        const logoutButton = yield* html.button("Logout");
+
+        return [
+          usernamesToLogout
+            .filter((u) => u === username)
+            .merge(logoutButton.onClick())
+            .merge(clears)
+            .map(() => loginHtml),
+          never,
+        ];
+      }
+
+      const onAppPage = yield html.pull(loopEvent);
+
+      let onFirstAppPage, firstSignupAttempts;
+
+      const afterSetAppPage = (yield* html.div(
+        { setInnerHtml: onAppPage },
+        function* () {
+          [onFirstAppPage, firstSignupAttempts] = yield* loginHtml();
+        }
+      )).afterSetInnerHtml();
+
+      onAppPage.loop(
+        (yield html.pull(() =>
+          afterSetAppPage.map(([nextAppPage]) => nextAppPage).switch()
+        )).merge(onFirstAppPage)
+      );
+      signupAttempts.loop(
+        (yield html.pull(() =>
+          afterSetAppPage.map(([, signupAttempts]) => signupAttempts).switch()
+        )).merge(firstSignupAttempts)
+      );
+    }
+
+    html.startHtml(document.body, main);
+  </script>
+</html>
