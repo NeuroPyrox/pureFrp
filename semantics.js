@@ -1,5 +1,9 @@
 const nothing = Symbol('nothing');
 
+// Rule: a reactive can only depend on the current and previous timestep.
+//  I was going to enforce this rule with a monad, but I thought that would
+//  make it too unreadable.
+
 // List of reactives:
 // 
 // Event = (int -> Maybe a)
@@ -130,9 +134,9 @@ function loopEvent(build) {
   return function loopEventAt(momentTime) {
     let output;
     const input = t => output(t);
-    const [b, event] = build(input)(momentTime);
+    const [result, event] = build(input)(momentTime);
     output = event;
-    return b;
+    return result;
   };
 }
 
@@ -142,9 +146,9 @@ function loopBehavior(build) {
   return function loopBehaviorAt(momentTime) {
     let output;
     const input = t => output(t);
-    const [b, behavior] = build(input)(momentTime);
+    const [result, behavior] = build(input)(momentTime);
     output = behavior;
-    return b;
+    return result;
   };
 }
 
